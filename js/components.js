@@ -1,3 +1,5 @@
+new Dragdealer('draggable');
+
 document.querySelector('.searchField').addEventListener("focus", function() {
 	document.getElementById("map").classList.add('blurred');
 });
