@@ -8,6 +8,7 @@ body {
 
 #map {
   position: absolute;
+  background-color: #08253a;
   left: 0;
   top: 0;
   height: 100%;
@@ -172,18 +173,106 @@ body {
 	text-align: center;
 }
 
+.infoCont {
+	position: absolute;
+	top: 15px;
+	right: 25px;
+	color: #fff;
+	border-bottom: dotted 1px #fff;
+	cursor: pointer;
+}
+
+.infoCont:hover {
+	/*color: #00E3C8;*/
+	border-color: #00E3C8;
+}
+
+.infoPane {
+	position: absolute;
+	width: 500px;
+	background-color: #fff;
+	left: 50%;
+	margin-left: -250px;
+	top: 120px;
+	border-radius: 4px;
+	padding-bottom: 30px;
+}
+
+.infoLogo {
+	height: 36px;
+	margin-top: 12px;
+	margin-left: 18px;
+}
+
+.cancelIcon {
+	float: right;
+	color: #fff;
+	font-size: 3rem;
+	margin-right: 18px;
+	margin-top: 1.25rem;
+	cursor: pointer;
+}
+
+.cancelIcon:hover {
+	color: #00E3C8;
+}
+
+.infoHeader {
+	background-color: #333;
+	width: 100%;
+	height: 56px;
+	border-radius: 3px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+}
+
+.infoBody {
+	padding-top: 5px;
+	padding-left: 25px;
+	padding-right: 25px;
+	padding-bottom: 15px;
+}
+
+.infoPane p {
+	font-family: "Georgia";
+	line-height: 1.9rem;
+	font-size: 1rem;
+	color: #333;
+}
+
+.infoPane a {
+	border-bottom: dotted 1px #00E3C8;
+	color: #333;
+	text-decoration: none;
+	font-style: italic;
+}
+
+.infoPane h4:first-of-type {
+	margin-top: 15px;
+}
+
+.infoPane h4 {
+	color: #333;
+	margin-top: 30px;
+	font-size: 1.3rem;
+	margin-bottom: 10px;
+	text-align: left;
+	border-bottom: solid 1px rgba(0,0,0,0.1);
+	width: 100%;
+}
+
 /* Add ons */
 .blurred {
 	-webkit-transition: -webkit-filter 0.5s;
 	-webkit-filter: grayscale(100%) brightness(50%);
 }
 
-.fadeOut {
+.fadeOutT {
 	-webkit-transition: opacity 0.3s ease;
 	opacity: 0;
 }
 
-.fadeIn {
+.fadeInT {
 	-webkit-transition: opacity 0.3s ease;
 	opacity: 1;
 }

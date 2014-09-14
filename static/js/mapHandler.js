@@ -22,7 +22,7 @@ function iterateData(data) {
   for (var i = 0; i < data.length; i++) {
   	var item = data[i];
   	console.log(item.location)
-  	blit(item.location[0], item.location[1]);
+  	blit(item.location[0] || null, item.location[1] || null);
   }
 }
 

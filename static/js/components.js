@@ -8,6 +8,16 @@ new Dragdealer('draggable', {
   }
 });
 
+document.querySelector('.infoCont').addEventListener('click', function() {
+	document.querySelector('.infoPane').classList.remove('hide');
+	document.querySelector('.infoPane').classList.remove('fadeOutUpBig');
+	document.querySelector('.infoPane').classList.add('animated', 'fadeInDownBig');
+})
+
+document.querySelector('.cancelIcon').addEventListener('click', function() {
+	document.querySelector('.infoPane').classList.add('fadeOutUpBig');
+})
+
 document.querySelector('.searchField').addEventListener("focus", function() {
 	document.getElementById("map").classList.add('blurred');
 })
@@ -22,7 +32,7 @@ document.querySelector('.searchField').addEventListener('keypress', function(e){
 function openMap(){
 	[].forEach.call( // Fade out search dialogue
 		document.querySelectorAll(".searchGroup"),
-		function(elem) { elem.classList.add('fadeOut') }
+		function(elem) { elem.classList.add('fadeOutT') }
 	);
 
 	document.querySelector('.loadingSpinner').classList.remove('hide'); // Throw loading symbol
@@ -30,8 +40,10 @@ function openMap(){
 	var term = document.querySelector('.searchField').value; // extract term from field
 	loadData(term, function(d) { // Load everything from backend
 		document.getElementById("map").classList.remove('blurred'); // On load, undo blur
-		document.querySelector('.smallSearchField').classList.remove('hide').add('fadeIn'); // Fade in small search dialogue
-		document.querySelector('.timeline').classList.remove('hide').add('fadeIn'); // Fade in timeline search dialogue
+		document.querySelector('.smallSearchField').classList.remove('hide')
+		document.querySelector('.smallSearchField').classList.add('fadeInT'); // Fade in small search dialogue
+		document.querySelector('.timeline').classList.remove('hide')
+		document.querySelector('.timeline').classList.add('fadeInT'); // Fade in timeline search dialogue
 		initTimeline(); // start timeline
 		document.querySelector('.smallSearchField').value = term; // Populate small search dialogue with term
 	});
@@ -48,7 +60,7 @@ function loadData(term, callback) {
 			callback();
 		}
 		else {
-			console.log("Error loading data.", term);
+			console.log("Error loading data.", term, error);
 		}
 	});
 }
