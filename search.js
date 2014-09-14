@@ -256,12 +256,12 @@ module.exports = function(app, db){
 							console.log("ERROR", err)
 						}
 						res.json(tweets)
-						console.log("Caching query results")
 						db.searches.save({
 							query: query,
 							tweets: tweets,
 							date: new Date()
 						});
+						console.log("Caching query results")
 					});
 				});
 			});
