@@ -45,28 +45,34 @@ function openMap(){
 		document.querySelector('.smallSearchField').classList.add('fadeInT'); // Fade in small search dialogue
 		document.querySelector('.timeline').classList.remove('hide')
 		document.querySelector('.timeline').classList.add('fadeInT'); // Fade in timeline search dialogue
-		initTimeline(); // start timeline
+		initTimeline(d); // start timeline
 		document.querySelector('.smallSearchField').value = term; // Populate small search dialogue with term
 	});
 }
 
 function loadData(term, callback) {
-	request.get('/search').query({ q: term })
-	.end(function(error, res){
-		if (res.ok) {
-			// Load up all the data
-			data = JSON.parse(res.text);
-			console.log(res)
-			iterateData(data);
-			callback();
+	socket.emit('query', term)
+	var data = [];
+	socket.on('tweets', function(tweets){
+		console.log("%s tweets recieved!", tweets.length, tweets)
+		data = data.concat(tweets);
+	});	
+	var timeout = false;
+	socket.on('progress', function(numLeft){
+		if(numLeft == 0 && data.length != 0){
+			console.log("Last tweet has arrived.");
+			callback(data)
+			clearTimeout(timeout)
 		}
-		else {
-			console.log("Error loading data.", term, error);
-		}
+		else console.log("%s tweets remaining", numLeft)
+
+		if(!timeout) setTimeout(function(){
+			callback(data)
+		}, 30*1000)
 	});
 }
 
-function initTimeline() {
+function initTimeline(data) {
 	// Figure out mins and maxes
 	var minPos = 0;
 	var maxPos = 1;  // Slider quirk, x is in range of [0,1]

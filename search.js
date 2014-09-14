@@ -112,7 +112,9 @@ function loadTweets(query, offset, mintime, callback){
 			result.list.forEach(function(tweet, i){
 				var link = tweet.trackback_permalink;
 				result.list[i].id = link.substring(link.lastIndexOf('/')+1);
-				ids.push(result.list[i].id);
+				
+				if(total < 10000 || i%2==0) // Thin the large datasets
+					ids.push(result.list[i].id);
 			});
 			var batch = [];
 			if(ids.length == 0)
@@ -173,7 +175,7 @@ function loadChunk(query, mintime, callback){
 		async.parallel(batch, function(err, results){
 			var tweets = [].concat.apply(tweets1, results);
 
-			console.log("Pre-clean tweets length", tweets.length);
+			// console.log("Pre-clean tweets length", tweets.length);
 
 			for(var i=0; i<tweets.length; i++){
 				if(tweets[i].status && tweets[i].status != 200){
@@ -201,68 +203,66 @@ function loadChunk(query, mintime, callback){
 				delete tweets[i].user
 			}
 
-			return callback(err, {tweets: tweets, total: total})
+			var batch = [];
+			tweets.forEach(function(tweet, i){
+				batch.push(function(done){
+					getLocation(tweet, i, done);
+				});
+			});
+
+			async.parallelLimit(batch, 1400, function(err, success){
+				if(err){	
+					console.log("ERROR", err)
+				}
+				return callback(err, {tweets: tweets, total: total})
+			});
 		});
 	});
 }
 
-module.exports = function(app, db){
-	app.get('/search', function(req, res){
-		var startTime = new Date();
-		if( !req.param('q') )
-			return res.status(400).send("Query required")
+module.exports = function(query, app, db, socket){
+	var startTime = new Date();
+	
+	db.searches.findOne({'query': query}, function(err, cachedResult){
+		
+		if( cachedResult && (new Date() - cachedResult.date) < 262974000 ){ // One month expiry
+			console.log("Falling back on cached result for query", cachedResult.query)
+			socket.emit('tweets', cachedResult.tweets);
+			socket.emit('progress', 0);	
+		}
 
-		var query = req.param('q')
-		db.searches.findOne({'query': query}, function(err, cachedResult){
-			
-			if( cachedResult && (new Date() - cachedResult.date) < 262974000 ){ // One month expiry
-				console.log("Falling back on cached result for query", cachedResult.query)
-				return setTimeout(function(){
-					res.json(cachedResult.tweets)
-				}, 1000)
+		var chunkQueue = []
+		loadChunk(query, nextChunkTime, function(err, result){
+			socket.emit('tweets', result.tweets);
+			socket.emit('progress', result.total);
+			for(var i=1; i<parseInt(result.total/990); i++){
+				(function(){
+					chunkQueue.push(function(done){
+						// console.log("Loading chunk with mintime at", nextChunkTime)
+						loadChunk(query, nextChunkTime, function(err, result){
+							socket.emit('tweets', result.tweets);
+							socket.emit('progress', result.total);
+							return done(null, result.tweets);
+						});
+					});
+				})();
 			}
 
-			var chunkQueue = []
-			loadChunk(query, nextChunkTime, function(err, result){
-				for(var i=1; i<parseInt(result.total/990); i++){
-					(function(){
-						chunkQueue.push(function(done){
-							// console.log("Loading chunk with mintime at", nextChunkTime)
-							loadChunk(query, nextChunkTime, function(err, result){
-								return done(null, result.tweets);
-							});
-						});
-					})();
-				}
+			async.series(chunkQueue, function(err, result){
+			 	var tweets = [].concat.apply([], result);
+				console.log("Final tweets length", tweets.length);
+				tweets = _.sortBy(_.uniq(tweets, _.iteratee('id')), _.iteratee('created_at'));
+				console.log("Unique tweet length:", tweets.length);
+				console.log("Responded in", (new Date() - startTime)*1000.0, "s")
+				console.log("next time is", nextChunkTime)
 
-				async.series(chunkQueue, function(err, result){
-				 	var tweets = [].concat.apply([], result);
-					console.log("Final tweets length", tweets.length);
-					tweets = _.sortBy(_.uniq(tweets, _.iteratee('id')), _.iteratee('created_at'));
-					console.log("Unique tweet length:", tweets.length);
-					console.log("Responded in", (new Date() - startTime)*1000.0, "s")
-					console.log("next time is", nextChunkTime)
+				socket.emit('progress', 0)
 
-					var batch = [];
-
-					tweets.forEach(function(tweet, i){
-						batch.push(function(done){
-							getLocation(tweet, i, done);
-						});
-					});
-
-					async.parallelLimit(batch, 1400, function(err, success){
-						if(err){
-							console.log("ERROR", err)
-						}
-						res.json(tweets)
-						db.searches.save({
-							query: query,
-							tweets: tweets,
-							date: new Date()
-						});
-						console.log("Caching query results")
-					});
+				console.log("Caching query results")
+				db.searches.save({
+					query: query,
+					tweets: tweets,
+					date: new Date()
 				});
 			});
 		});
