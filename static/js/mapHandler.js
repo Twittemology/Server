@@ -18,11 +18,11 @@ var circle_options = {
 
 
 // Helper functions
-function iterateData(d) {
+function iterateData(data) {
   for (var i = 0; i < data.length; i++) {
   	var item = data[i];
-  	console.log(item.location.split())
-  	blit(item.location.split()[0], item.location.split()[1]);
+  	console.log(item.location)
+  	blit(item.location[0], item.location[1]);
   }
 }
 
