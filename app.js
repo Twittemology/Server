@@ -3,10 +3,11 @@ var express = require('express'),
 	db = require('mongojs')('twittemology', ['searches']),
 	app = express();
 
+app.set('views', __dirname+'/views');
+
+app.use( express.static(__dirname+'/static') )
+
 require('./search')(app, db);
 
-app.get('/', function(req, res){
-	res.send("App is running");
-})
 
 app.listen(4000)
