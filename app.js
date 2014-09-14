@@ -5,4 +5,8 @@ var express = require('express'),
 
 require('./search')(app, db);
 
+app.get('/', function(req, res){
+	res.send("App is running");
+})
+
 app.listen(4000)
