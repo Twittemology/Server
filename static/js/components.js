@@ -77,18 +77,12 @@ function loadData(term, callback) {
 		console.log("%s tweets recieved!", tweets.length, tweets)
 		data = data.concat(tweets);
 	});	
-	var timeout = false;
 	socket.on('progress', function(numLeft){
 		if(numLeft == 0 && data.length != 0){
 			console.log("Last tweet has arrived.");
 			callback(data)
-			clearTimeout(timeout)
 		}
 		else console.log("%s tweets remaining", numLeft)
-
-		if(!timeout) setTimeout(function(){
-			callback(data)
-		}, 30*1000)
 	});
 }
 

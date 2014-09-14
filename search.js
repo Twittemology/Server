@@ -13,6 +13,11 @@ function queryBing(q, callback){
 }
 
 function getLocation(tweet, i, done){
+	if(tweet.status){
+		console.log("DELETED STATUS OF A TWEET WITH AN ERROR", tweet)
+		delete tweet[i]
+		return done();
+	}
 	if(!tweet.location || tweet.location == undefined){
 		tweet.location = ""
 	}
@@ -27,12 +32,12 @@ function getLocation(tweet, i, done){
 	}
 	if(tweet.location.match(/(\W?D\W?M\W?V\W?)|(dc)|(district)/i)){ // Common DMV
 		console.log('reg2', tweet.location)
-		tweet.location = [38.90618896484375+((Math.random()-0.5)*1.5), -77.01726531982422+((Math.random()-0.5))*1.2]
+		tweet.location = [38.90618896484375+((Math.random()-0.5)*1.5), -97.01726531982422+((Math.random()-0.5))*1.2]
 		return done()
 	}
 	if(tweet.location.match(/(nova)|(fairfax)|(virginia)|(pg)/)){
 		console.log('reg3')
-		tweet.location = [38.84178924560547+(Math.random()-0.5)*1.2, -77.30886840820312+(Math.random()-0.5)*1.1]
+		tweet.location = [38.84178924560547+(Math.random()-0.5)*1.2, -97.30886840820312+(Math.random()-0.5)*1.1]
 		return done()
 	}
 	
@@ -61,15 +66,16 @@ function getLocation(tweet, i, done){
 						console.log('loc2')
 						tweet.location = loc.point;
 					}else if(tweet.timezone){
-						if(tweet.timezone.indexOf("Eastern") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -72.0+(Math.random()-0.5)*10]
-						} else if(tweet.timezone.indexOf('Central') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -87.0+(Math.random()-0.5)*10]
-						}else if(tweet.timezone.indexOf('Mountain') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -102.0+(Math.random()-0.5)*10]
-						}else if(tweet.timezone.indexOf("Pacific") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -117.0+(Math.random()-0.5)*10]
-						}
+						// if(tweet.timezone.indexOf("Eastern") != -1){
+						// 	tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
+						// } else if(tweet.timezone.indexOf('Central') != -1){
+						// 	tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
+						// }else if(tweet.timezone.indexOf('Mountain') != -1){
+						// 	tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
+						// }else if(tweet.timezone.indexOf("Pacific") != -1){
+						// 	tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
+						// }
+						delete tweet[i]
 					}else{
 						console.log("no locs found")
 						delete tweet[i]
@@ -78,7 +84,8 @@ function getLocation(tweet, i, done){
 			}
 			return done()
 		}catch(e){
-			console.log("ERROR PARSING JSON", e, res.body);
+			if(res)
+				console.log("ERROR PARSING JSON", e, res.body);
 			delete tweet[i]
 			return done()
 		}
@@ -113,7 +120,7 @@ function loadTweets(query, offset, mintime, callback){
 				var link = tweet.trackback_permalink;
 				result.list[i].id = link.substring(link.lastIndexOf('/')+1);
 				
-				if(total < 10000 || i%2==0) // Thin the large datasets
+				if(total < 10000 || i%3==0 || i%3==1) // Thin the large datasets
 					ids.push(result.list[i].id);
 			});
 			var batch = [];
@@ -135,7 +142,9 @@ function loadTweets(query, offset, mintime, callback){
 							var split = response.text.split('\n');
 							split.forEach(function(s){
 								if(s.length > 0)
-									tweets.push( JSON.parse(s) )
+									var t = JSON.parse(s)
+									if(t && t.status)
+										tweets.push( t )
 							});
 							done(null, tweets)
 						});
@@ -225,10 +234,14 @@ module.exports = function(query, app, db, socket){
 	
 	db.searches.findOne({'query': query}, function(err, cachedResult){
 		
-		if( cachedResult && (new Date() - cachedResult.date) < 262974000 ){ // One month expiry
-			console.log("Falling back on cached result for query", cachedResult.query)
-			socket.emit('tweets', cachedResult.tweets);
+		if( cachedResult ){ // One month expiry
+			console.log("Falling back on cached result for query", cachedResult)
+			tweets = _.sortBy(cachedResult.tweets, _.iteratee('created_at'))
+			socket.emit('tweets', tweets);
 			socket.emit('progress', 0);	
+			return;
+		}else{
+			console.log(query, cachedResult)
 		}
 
 		var chunkQueue = []
