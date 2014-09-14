@@ -33,13 +33,15 @@ function iterateData(data) {
 }
 
 function blit(lat, long, size) {
-  console.log('lls', lat, long, size)
-  var circle = L.circle([lat || 40.028, long || -98.657], (size || 1500), circle_options).addTo(map);
-  circle._path.style.opacity = 1;
+	if (lat && long) {
+	  console.log('lls', lat, long, size)
+	  var circle = L.circle([lat, long], (size || 45000), circle_options).addTo(map);
+	  circle._path.style.opacity = 1;
 
-  animating.push(circle);
+	  animating.push(circle);
 
-  if (!animationFrame) { animationFrame = window.requestAnimationFrame(step); }
+	  if (!animationFrame) { animationFrame = window.requestAnimationFrame(step); }
+	}
 }
 
 function step() {
@@ -51,12 +53,12 @@ function step() {
 }
 
 function growCircle(c) {
-  c.setRadius((c.getRadius() + 100) * 1.12);
+  //c.setRadius((c.getRadius() + 100) * 1.12);
   c._path.style.opacity = c._path.style.opacity - (0.028);
 
   if (c._path.style.opacity < 0) {
     console.log('done');
     animating[0]._path.style.opacity = 0;
     animating.shift();
-  }
+  } 
 }

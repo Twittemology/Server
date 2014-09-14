@@ -1,12 +1,30 @@
+var currData;
+var tPInd = 0;
+
+var timelineDeltaT;
+
 request = superagent;
+var mapOpen = false;
+
+var dd;
+var tP = 0;
 
 var n = function(x) { return x; }
 
-new Dragdealer('draggable', {
-  animationCallback: function(x, y) {
-    document.querySelector('.trackerCont').innerHTML = n(x);
-  }
-});
+function parseDate(n) {
+	return  n == 0 ? "January" : 
+				  n == 1 ? "February" :
+				  n == 2 ? "March" :
+				  n == 3 ? "April" :
+				  n == 4 ? "May" :
+				  n == 5 ? "June" :
+				  n == 6 ? "July" :
+				  n == 7 ? "August" :
+				  n == 8 ? "September" :
+				  n == 9 ? "October" :
+				  n == 10 ? "November" :
+				  "December";
+}
 
 document.querySelector('.infoCont').addEventListener('click', function() {
 	document.querySelector('.infoPane').classList.remove('hide');
@@ -19,7 +37,7 @@ document.querySelector('.cancelIcon').addEventListener('click', function() {
 })
 
 document.querySelector('.searchField').addEventListener("focus", function() {
-	document.getElementById("map").classList.add('blurred');
+	if (!mapOpen) { document.getElementById("map").classList.add('blurred'); }
 })
 
 document.querySelector('.buttonCont').addEventListener('click', openMap);
@@ -30,6 +48,8 @@ document.querySelector('.searchField').addEventListener('keypress', function(e){
 });
 
 function openMap(){
+	mapOpen = true;
+
 	[].forEach.call( // Fade out search dialogue
 		document.querySelectorAll(".searchGroup"),
 		function(elem) { elem.classList.add('fadeOutT') }
@@ -43,7 +63,7 @@ function openMap(){
 		document.querySelector('.loadingSpinner').classList.add('hide');
 		document.querySelector('.smallSearchField').classList.remove('hide');
 		document.querySelector('.smallSearchField').classList.add('fadeInT'); // Fade in small search dialogue
-		document.querySelector('.timeline').classList.remove('hide')
+		document.querySelector('.timeline').style.display = "block";
 		document.querySelector('.timeline').classList.add('fadeInT'); // Fade in timeline search dialogue
 		initTimeline(d); // start timeline
 		document.querySelector('.smallSearchField').value = term; // Populate small search dialogue with term
@@ -73,6 +93,8 @@ function loadData(term, callback) {
 }
 
 function initTimeline(data) {
+	currData = data;
+
 	// Figure out mins and maxes
 	var minPos = 0;
 	var maxPos = 1;  // Slider quirk, x is in range of [0,1]
@@ -84,7 +106,72 @@ function initTimeline(data) {
 		if (new Date(data[i].created_at)*1 > maxDate) { maxDate = new Date(data[i].created_at)*1; }
 	}
 
-	n = normalizeToDate(minPos, maxPos, minDate, maxDate)
+	n = normalizeToDate(minPos, maxPos, minDate, maxDate);
+
+	var d = n(0)
+	document.querySelector('.trackerCont').innerHTML = (d ? parseDate(d.getMonth()) : "n") + " " + (d ? d.getFullYear() :  "a");
+
+	dd = new Dragdealer('draggable', {
+		horizontal: true,
+	  callback: function(x, y) {
+	  	var d = n(x);
+	    document.querySelector('.trackerCont').innerHTML = (d ? parseDate(d.getMonth()) : "n") + " " + (d ? d.getFullYear() :  "a");
+
+	    if (x == 0 && tP >= 1) {
+	    	tP = 0;
+	    	tPInd = 0;
+	    	timelineDeltaT = Date.now();
+				window.requestAnimationFrame(animateTimeline);
+	    }
+	  }
+	});
+
+	timelineDeltaT = Date.now();
+	window.requestAnimationFrame(animateTimeline);
+}
+
+function animateTimeline() {
+	var dt = Date.now() - timelineDeltaT;
+
+	tP += 0.00005*dt;
+	dd.setValue(tP, 0, true);
+
+  var d = n(tP);
+  document.querySelector('.trackerCont').innerHTML = (d ? parseDate(d.getMonth()) : "n") + " " + (d ? d.getFullYear() :  "a");
+
+  checkBlits();
+
+	if (tP <= 1) {
+		timelineDeltaT = Date.now();
+		window.requestAnimationFrame(animateTimeline);
+	}
+}
+
+function checkBlits() {
+	 if (currData[tPInd]) {
+	 	var d = n(tP);
+  	while (new Date(currData[tPInd].created_at) < d) {
+    	if (new Date(currData[tPInd].created_at) < d) {
+    		if (tPInd % 15 == 0) {
+			  	var item = currData[tPInd];
+			  	console.log(item.location)
+			  	if(typeof item.location == 'string'){
+			  		item.location.replace(/\D/g, '')
+			  		item.location = item.location.split(',')
+			  	}
+			  	try{
+			  		blit(item.location[0] || null, item.location[1] || null);
+					}catch(e){
+						console.log("ERROR", e)
+					}
+				}
+				tPInd++;
+    	}
+    }
+  }
+  else {
+  	console.log(currData[tPInd]);
+  }
 }
 
 function normalizeToDate(minPos, maxPos, minDate, maxDate) {
@@ -92,9 +179,9 @@ function normalizeToDate(minPos, maxPos, minDate, maxDate) {
 		var posRange = maxPos - minPos;
 		var dateRange = maxDate - minDate;
 		var posRatio = (n + minPos) / maxPos;
-		var equivDate = posRatio * maxDate;
+		var equivDate = (posRatio * dateRange) + minDate;
 
-		console.log(posRange, dateRange, posRatio, equivDate);
+		//console.log(posRange, maxDate, minDate, posRatio, equivDate);
 
 		return new Date(equivDate);
 	}

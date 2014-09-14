@@ -171,6 +171,7 @@ body {
 	padding-left: 25px;
 	padding-right: 25px;
 	text-align: center;
+	width: 150px;
 }
 
 .infoCont {
@@ -261,6 +262,10 @@ body {
 	width: 100%;
 }
 
+.leaflet-control-attribution {
+	display: none;
+}
+
 /* Add ons */
 .blurred {
 	-webkit-transition: -webkit-filter 0.5s;
@@ -280,4 +285,5 @@ body {
 .hide {
 	opacity: 1;
 	display: none;
+	z-index: -100000;
 }
