@@ -1,4 +1,10 @@
-new Dragdealer('draggable');
+var n = function(x) { return x; }
+
+new Dragdealer('draggable', {
+  animationCallback: function(x, y) {
+    document.querySelector('.trackerCont').innerHTML = Math.round(n(x));
+  }
+});
 
 document.querySelector('.searchField').addEventListener("focus", function() {
 	document.getElementById("map").classList.add('blurred');
@@ -13,9 +19,11 @@ document.querySelector('.buttonCont').addEventListener('click', function() {
 	document.querySelector('.loadingSpinner').classList.remove('hide'); // Throw loading symbol
 	map.setView([38.828, -96.557], 5); // Position map
 	var term = document.querySelector('.searchField').value; // extract term from field
-	loadData(term, function() { // Load everything from backend
+	loadData(term, function(d) { // Load everything from backend
 		document.getElementById("map").classList.remove('blurred'); // On load, undo blur
-		document.querySelector('.smallSearchField').classList.add('fadeIn'); // Fade in small search dialogue
+		document.querySelector('.smallSearchField').classList.remove('hide').add('fadeIn'); // Fade in small search dialogue
+		document.querySelector('.timeline').classList.remove('hide').add('fadeIn'); // Fade in timeline search dialogue
+		initTimeline(); // start timeline
 		document.querySelector('.smallSearchField').value = term; // Populate small search dialogue with term
 	});
 })
@@ -32,4 +40,13 @@ function loadData(term, callback) {
 			console.log("Error loading data.", term);
 		}
 	});
+}
+
+function initTimeline() {
+	// Figure out mins and maxes
+	n = normalizeToDate(minPos, maxPos, minDate, maxDate)
+}
+
+function normalizeToDate(minPos, maxPos, minDate, maxDate) {
+
 }
