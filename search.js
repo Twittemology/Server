@@ -258,12 +258,17 @@ module.exports = function(query, app, db, socket){
 
 				socket.emit('progress', 0)
 
-				console.log("Caching query results")
-				db.searches.save({
-					query: query,
-					tweets: tweets,
-					date: new Date()
-				});
+				if (tweets.length > 5) {
+					console.log("Caching query results")
+					db.searches.save({
+						query: query,
+						tweets: tweets,
+						date: new Date()
+					});
+				}
+				else {
+					console.log("Probable received malformed data, try again");
+				}
 			});
 		});
 	});
