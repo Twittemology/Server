@@ -6,46 +6,80 @@ var BING_KEY = 'AgrIS_e1yz4TZhJcQY9WkD752JmiOX_6TD5NVIlJ_W0UPLix1cVyZlsRc0L7Ze7X
 var nextChunkTime = 0;
 
 function queryBing(q, callback){
-	var url = "http://dev.virtualearth.net/REST/v1/Locations/"+encodeURIComponent(q)+"?o=json&key="+bingKey;
+	var url = "http://dev.virtualearth.net/REST/v1/Locations/"+encodeURIComponent(q)+"?o=json&key="+BING_KEY;
 	return request.get(url, function(err, response){
 		return callback(err, response, url);
 	});
 }
 
-function getLocation(tweet){
+function getLocation(tweet, i, done){
+	if(!tweet.location || tweet.location == undefined){
+		tweet.location = ""
+	}
+	if(tweet.coordinates){
+		tweet.location = tweet.coordinates.coordinates
+		return done()
+	}
 	if(tweet.location.match(/-?\d+\.\d+\s-?\d+\.\d+/)){ // Already a lat/long coordinate
 		tweet.location = tweet.location.split(' ');
+		console.log('reg1')
 		return done()
 	}
-	if(tweet.location.match(/(\(?D\)?\(?M\)?\(?V\)?)|(dc)|(district)/i)){ // Common DMV
-		tweet.location = [38.90618896484375+((Math.random()-0.5)*1.3), -77.01726531982422+((Math.random()-0.5))]
+	if(tweet.location.match(/(\W?D\W?M\W?V\W?)|(dc)|(district)/i)){ // Common DMV
+		console.log('reg2', tweet.location)
+		tweet.location = [38.90618896484375+((Math.random()-0.5)*1.5), -77.01726531982422+((Math.random()-0.5))*1.2]
 		return done()
 	}
-	if(tweet.location.match(/(nova)|(fairfax)|(virginia)/)){
-		tweet.location = [38.84178924560547+(Math.random()-0.5), -77.30886840820312+(Math.random()-0.5)]
+	if(tweet.location.match(/(nova)|(fairfax)|(virginia)|(pg)/)){
+		console.log('reg3')
+		tweet.location = [38.84178924560547+(Math.random()-0.5)*1.2, -77.30886840820312+(Math.random()-0.5)*1.1]
+		return done()
 	}
+	
 	queryBing(tweet.location, function(err, res, url){
+		if(err){
+			console.log("ERROR!", err);
+		}
 		try{
-			var response = JSON.parse(res.body);
-			var loc = response.resourceSets[0].resources[0];
+			var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
+			var loc;
+			if(response.resourceSets && response.resourceSets[0].resources)
+				loc = response.resourceSets[0].resources[0];
 			if(loc){
+				console.log('loc1')
 				tweet.location = loc.point
 			}else{
-				queryBing(tweet.time_zone, function(err, res){
-					var response = JSON.parse(res.body);
-					var loc = response.resourceSets[0].resources[0];
+				queryBing(tweet.timezone, function(err, res){
+					if(err){
+						console.log("ERROR!", err)
+					}
+					var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
+					var loc;
+					if(response.resourceSets && response.resourceSets[0].resources)
+						loc = response.resourceSets[0].resources[0];
 					if(loc){
+						console.log('loc2')
 						tweet.location = loc.point;
+					}else if(tweet.timezone){
+						if(tweet.timezone.indexOf("Eastern") != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
+						} else if(tweet.timezone.indexOf('Central') != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
+						}else if(tweet.timezone.indexOf('Mountain') != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
+						}else if(tweet.timezone.indexOf("Pacific") != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
+						}
 					}else{
-						tweet.location = null
+						console.log("no locs found")
+						delete tweet[i]
 					}
 				});
 			}
 			return done()
-		}
-		catch(e){
-			console.log("ERROR PARSING JSON");
-			tweet.location = null
+		}catch(e){
+			console.log("ERROR PARSING JSON", e, res.body);
+			delete tweet[i]
 			return done()
 		}
 	});
@@ -179,42 +213,55 @@ module.exports = function(app, db){
 			return res.send(400, "Query required")
 
 		var query = req.param('q')
-		var cachedResult = db['searches'].find({'query': query})[0]
-		if( cachedResult && (new Date() - cachedResult.date) < 262974000 ){ // One month expiry
-			console.log("Falling back on cached result for query", cachedResult)
-			setTimeout(function(){
-				return res.json(cachedResult.tweets)
-			}, 1000)
-		}
-
-		var chunkQueue = []
-		loadChunk(query, nextChunkTime, function(err, result){
-			for(var i=1; i<parseInt(result.total/990); i++){
-				(function(){
-					chunkQueue.push(function(done){
-						// console.log("Loading chunk with mintime at", nextChunkTime)
-						loadChunk(query, nextChunkTime, function(err, result){
-							return done(null, result.tweets);
-						});
-					});
-				})();
+		db.searches.findOne({'query': query}, function(err, cachedResult){
+			
+			if( cachedResult && (new Date() - cachedResult.date) < 262974000 ){ // One month expiry
+				console.log("Falling back on cached result for query", cachedResult.query)
+				return setTimeout(function(){
+					res.json(cachedResult.tweets)
+				}, 1000)
 			}
 
-			async.series(chunkQueue, function(err, result){
-			 	var tweets = [].concat.apply([], result);
-				console.log("Final tweets length", tweets.length);
-				tweets = _.uniq(tweets, _.iteratee('id'));
-				console.log("Unique tweet length:", tweets.length);
-				console.log("Responded in", (new Date() - startTime)*1000.0, "s")
-				console.log("next time is", nextChunkTime)
+			var chunkQueue = []
+			loadChunk(query, nextChunkTime, function(err, result){
+				for(var i=1; i<parseInt(result.total/990); i++){
+					(function(){
+						chunkQueue.push(function(done){
+							// console.log("Loading chunk with mintime at", nextChunkTime)
+							loadChunk(query, nextChunkTime, function(err, result){
+								return done(null, result.tweets);
+							});
+						});
+					})();
+				}
 
-				res.json(tweets);
+				async.series(chunkQueue, function(err, result){
+				 	var tweets = [].concat.apply([], result);
+					console.log("Final tweets length", tweets.length);
+					tweets = _.sortBy(_.uniq(tweets, _.iteratee('id')), _.iteratee('created_at'));
+					console.log("Unique tweet length:", tweets.length);
+					console.log("Responded in", (new Date() - startTime)*1000.0, "s")
+					console.log("next time is", nextChunkTime)
 
-				console.log("Caching query results")
-				db.searches.save({
-					query: query,
-					tweets: tweets,
-					date: new Date()
+					var batch = [];
+
+					tweets.forEach(function(tweet, i){
+						batch.push(function(done){
+							getLocation(tweet, i, done);
+						});
+					});
+
+					async.parallelLimit(batch, 1400, function(err, success){
+						if(err){
+							console.log("ERROR", err)
+						}
+						console.log("Caching query results")
+						db.searches.save({
+							query: query,
+							tweets: tweets,
+							date: new Date()
+						});
+					});
 				});
 			});
 		});
