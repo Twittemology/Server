@@ -173,7 +173,7 @@ function loadChunk(query, mintime, callback){
 		async.parallel(batch, function(err, results){
 			var tweets = [].concat.apply(tweets1, results);
 
-			// console.log("Pre-clean tweets length", tweets.length);
+			console.log("Pre-clean tweets length", tweets.length);
 
 			for(var i=0; i<tweets.length; i++){
 				if(tweets[i].status && tweets[i].status != 200){

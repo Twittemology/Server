@@ -4,13 +4,19 @@ var express = require('express'),
 	db = require('mongojs')(mongo_url, ['searches']),
 	app = express();
 
-
-
 app.set('views', __dirname+'/views');
 
 app.use( express.static(__dirname+'/static') )
 
+// io.on('connection', function(socket){
+// 	console.log('a user connected');
+// 	socket.on('disconnect', function(){
+// 		console.log('user disconnected');
+// 	});
+// 	require('./search')(app, db, socket);
+// });
+
 require('./search')(app, db);
 
-
 app.listen(4000)
+console.log("Server listening")
