@@ -25,6 +25,5 @@ io.on('connection', function(socket){
 	});
 });
 
-var port = process.env.NODE_ENV == 'production' ? 80 : 4000;
-server.listen(port)
+server.listen(4000)
 console.log("Server listening")
