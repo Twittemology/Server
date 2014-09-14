@@ -62,13 +62,13 @@ function getLocation(tweet, i, done){
 						tweet.location = loc.point;
 					}else if(tweet.timezone){
 						if(tweet.timezone.indexOf("Eastern") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
+							tweet.location = [20.0+(Math.random()-0.5)*20, -72.0+(Math.random()-0.5)*10]
 						} else if(tweet.timezone.indexOf('Central') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
+							tweet.location = [20.0+(Math.random()-0.5)*20, -87.0+(Math.random()-0.5)*10]
 						}else if(tweet.timezone.indexOf('Mountain') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
+							tweet.location = [20.0+(Math.random()-0.5)*20, -102.0+(Math.random()-0.5)*10]
 						}else if(tweet.timezone.indexOf("Pacific") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
+							tweet.location = [20.0+(Math.random()-0.5)*20, -117.0+(Math.random()-0.5)*10]
 						}
 					}else{
 						console.log("no locs found")
