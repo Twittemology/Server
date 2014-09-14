@@ -260,6 +260,7 @@ module.exports = function(app, db){
 						if(err){
 							console.log("ERROR", err)
 						}
+						res.json(tweets)
 						console.log("Caching query results")
 						db.searches.save({
 							query: query,
