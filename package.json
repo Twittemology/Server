@@ -1,0 +1,25 @@
+{
+  "name": "Twittemology",
+  "version": "0.1.0",
+  "description": "A web app that shows you heatmaps and analytics for phrases and hashtags as used in your twitter network",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Twittemology/Server"
+  },
+  "author": "Peter Andringa, John Moss",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Twittemology/Server/issues"
+  },
+  "dependencies": {
+    "express": "~4.9.0",
+    "superagent": "~0.18.2",
+    "async": "~0.9.0",
+    "underscore": "~1.7.0",
+    "mongojs": "~0.14.1"
+  }
+}
