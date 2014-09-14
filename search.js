@@ -53,37 +53,32 @@ function getLocation(tweet, i, done){
 					if(err){
 						console.log("ERROR!", err)
 					}
-					if (res) {
-						var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
-						var loc;
-						if(response.resourceSets && response.resourceSets[0].resources)
-							loc = response.resourceSets[0].resources[0];
-						if(loc){
-							console.log('loc2')
-							tweet.location = loc.point;
-						}else if(tweet.timezone){
-							if(tweet.timezone.indexOf("Eastern") != -1){
-								tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
-							} else if(tweet.timezone.indexOf('Central') != -1){
-								tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
-							}else if(tweet.timezone.indexOf('Mountain') != -1){
-								tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
-							}else if(tweet.timezone.indexOf("Pacific") != -1){
-								tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
-							}
-						}else{
-							console.log("no locs found")
-							delete tweet[i]
+					var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
+					var loc;
+					if(response.resourceSets && response.resourceSets[0].resources)
+						loc = response.resourceSets[0].resources[0];
+					if(loc){
+						console.log('loc2')
+						tweet.location = loc.point;
+					}else if(tweet.timezone){
+						if(tweet.timezone.indexOf("Eastern") != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
+						} else if(tweet.timezone.indexOf('Central') != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
+						}else if(tweet.timezone.indexOf('Mountain') != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
+						}else if(tweet.timezone.indexOf("Pacific") != -1){
+							tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
 						}
-					}
-					else {
-						console.log("No res, possible timeout?");
+					}else{
+						console.log("no locs found")
+						delete tweet[i]
 					}
 				});
 			}
 			return done()
 		}catch(e){
-			console.log("ERROR PARSING JSON", e);
+			console.log("ERROR PARSING JSON", e, res.body);
 			delete tweet[i]
 			return done()
 		}
@@ -215,7 +210,7 @@ module.exports = function(app, db){
 	app.get('/search', function(req, res){
 		var startTime = new Date();
 		if( !req.param('q') )
-			return res.send(400, "Query required")
+			return res.status(400).send("Query required")
 
 		var query = req.param('q')
 		db.searches.findOne({'query': query}, function(err, cachedResult){
