@@ -1,12 +1,12 @@
+request = superagent;
+
 var n = function(x) { return x; }
 
 new Dragdealer('draggable', {
   animationCallback: function(x, y) {
-    document.querySelector('.trackerCont').innerHTML = Math.round(n(x));
+    document.querySelector('.trackerCont').innerHTML = n(x);
   }
 });
-
-request = superagent;
 
 document.querySelector('.searchField').addEventListener("focus", function() {
 	document.getElementById("map").classList.add('blurred');
@@ -55,9 +55,28 @@ function loadData(term, callback) {
 
 function initTimeline() {
 	// Figure out mins and maxes
+	var minPos = 0;
+	var maxPos = 1;  // Slider quirk, x is in range of [0,1]
+
+	var minDate = new Date(); // now
+	var maxDate = new Date(0); // epoch
+	for (var i = 0; i < data.length; i++) {
+		if (data[i].created_at < minDate) { minDate = data[i].created_at; }
+		if (data[i].created_at > maxDate) { maxDate = data[i].created_at; }
+	}
+
 	n = normalizeToDate(minPos, maxPos, minDate, maxDate)
 }
 
 function normalizeToDate(minPos, maxPos, minDate, maxDate) {
+	return function(n) {
+		var posRange = maxPos - minPos;
+		var dateRange = maxDate - minDate;
+		var posRatio = (n + minPos) / maxPos;
+		var equivDate = posRatio * maxDate;
 
+		console.log(posRange, dateRange, posRatio, equivDate);
+
+		return new Date(equivDate);
+	}
 }
