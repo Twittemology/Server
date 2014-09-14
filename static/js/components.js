@@ -56,7 +56,7 @@ function loadData(term, callback) {
 		if (res.ok) {
 			// Load up all the data
 			data = JSON.parse(res.text);
-			console.log(res.text)
+			console.log(res)
 			iterateData(data);
 			callback();
 		}
@@ -72,10 +72,10 @@ function initTimeline() {
 	var maxPos = 1;  // Slider quirk, x is in range of [0,1]
 
 	var minDate = new Date()*1; // now
-	var maxDate = new Date(0)*1; // epoch
+	var maxDate = 1; // epoch
 	for (var i = 0; i < data.length; i++) {
-		if (data[i].created_at < minDate) { minDate = data[i].created_at; }
-		if (data[i].created_at > maxDate) { maxDate = data[i].created_at; }
+		if (new Date(data[i].created_at)*1 < minDate) { minDate = new Date(data[i].created_at)*1; }
+		if (new Date(data[i].created_at)*1 > maxDate) { maxDate = new Date(data[i].created_at)*1; }
 	}
 
 	n = normalizeToDate(minPos, maxPos, minDate, maxDate)
@@ -84,11 +84,11 @@ function initTimeline() {
 function normalizeToDate(minPos, maxPos, minDate, maxDate) {
 	return function(n) {
 		var posRange = maxPos - minPos;
-		var dateRange = minDate - maxDate;
+		var dateRange = maxDate - minDate;
 		var posRatio = (n + minPos) / maxPos;
-		var equivDate = posRatio * minDate;
+		var equivDate = posRatio * maxDate;
 
-		console.log(posRange, dateRange, minDate, maxDate, posRatio, equivDate);
+		console.log(posRange, dateRange, posRatio, equivDate);
 
 		return new Date(equivDate);
 	}
