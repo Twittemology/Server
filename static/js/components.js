@@ -40,7 +40,8 @@ function openMap(){
 	var term = document.querySelector('.searchField').value; // extract term from field
 	loadData(term, function(d) { // Load everything from backend
 		document.getElementById("map").classList.remove('blurred'); // On load, undo blur
-		document.querySelector('.smallSearchField').classList.remove('hide')
+		document.querySelector('.loadingSpinner').classList.add('hide');
+		document.querySelector('.smallSearchField').classList.remove('hide');
 		document.querySelector('.smallSearchField').classList.add('fadeInT'); // Fade in small search dialogue
 		document.querySelector('.timeline').classList.remove('hide')
 		document.querySelector('.timeline').classList.add('fadeInT'); // Fade in timeline search dialogue
@@ -70,8 +71,8 @@ function initTimeline() {
 	var minPos = 0;
 	var maxPos = 1;  // Slider quirk, x is in range of [0,1]
 
-	var minDate = new Date(); // now
-	var maxDate = new Date(0); // epoch
+	var minDate = new Date()*1; // now
+	var maxDate = new Date(0)*1; // epoch
 	for (var i = 0; i < data.length; i++) {
 		if (data[i].created_at < minDate) { minDate = data[i].created_at; }
 		if (data[i].created_at > maxDate) { maxDate = data[i].created_at; }
@@ -83,11 +84,11 @@ function initTimeline() {
 function normalizeToDate(minPos, maxPos, minDate, maxDate) {
 	return function(n) {
 		var posRange = maxPos - minPos;
-		var dateRange = maxDate - minDate;
+		var dateRange = minDate - maxDate;
 		var posRatio = (n + minPos) / maxPos;
-		var equivDate = posRatio * maxDate;
+		var equivDate = posRatio * minDate;
 
-		console.log(posRange, dateRange, posRatio, equivDate);
+		console.log(posRange, dateRange, minDate, maxDate, posRatio, equivDate);
 
 		return new Date(equivDate);
 	}

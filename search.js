@@ -53,32 +53,37 @@ function getLocation(tweet, i, done){
 					if(err){
 						console.log("ERROR!", err)
 					}
-					var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
-					var loc;
-					if(response.resourceSets && response.resourceSets[0].resources)
-						loc = response.resourceSets[0].resources[0];
-					if(loc){
-						console.log('loc2')
-						tweet.location = loc.point;
-					}else if(tweet.timezone){
-						if(tweet.timezone.indexOf("Eastern") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
-						} else if(tweet.timezone.indexOf('Central') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
-						}else if(tweet.timezone.indexOf('Mountain') != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
-						}else if(tweet.timezone.indexOf("Pacific") != -1){
-							tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
+					if (res) {
+						var response = typeof res.body == 'object' ? res.body : JSON.parse(res.body);
+						var loc;
+						if(response.resourceSets && response.resourceSets[0].resources)
+							loc = response.resourceSets[0].resources[0];
+						if(loc){
+							console.log('loc2')
+							tweet.location = loc.point;
+						}else if(tweet.timezone){
+							if(tweet.timezone.indexOf("Eastern") != -1){
+								tweet.location = [20.0+(Math.random()-0.5)*20, -82.0+(Math.random()-0.5)*10]
+							} else if(tweet.timezone.indexOf('Central') != -1){
+								tweet.location = [20.0+(Math.random()-0.5)*20, -97.0+(Math.random()-0.5)*10]
+							}else if(tweet.timezone.indexOf('Mountain') != -1){
+								tweet.location = [20.0+(Math.random()-0.5)*20, -112.0+(Math.random()-0.5)*10]
+							}else if(tweet.timezone.indexOf("Pacific") != -1){
+								tweet.location = [20.0+(Math.random()-0.5)*20, -127.0+(Math.random()-0.5)*10]
+							}
+						}else{
+							console.log("no locs found")
+							delete tweet[i]
 						}
-					}else{
-						console.log("no locs found")
-						delete tweet[i]
+					}
+					else {
+						console.log("No res, possible timeout?");
 					}
 				});
 			}
 			return done()
 		}catch(e){
-			console.log("ERROR PARSING JSON", e, res.body);
+			console.log("ERROR PARSING JSON", e);
 			delete tweet[i]
 			return done()
 		}
